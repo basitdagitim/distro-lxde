@@ -108,6 +108,8 @@ for paket in libfm libfm-extra menu-cache lxappearance lxde-common lxde-icon-the
 do
 $rootfs/bin/bps -ri  $paket $rootfs
 done
+$rootfs/bin/bps -i  gtk3 $rootfs
+$rootfs/bin/bps -i  libjpeg-turbo $rootfs
 ### update-initrd
 fname=$(basename $rootfs/boot/config*)
 kversion=${fname:7}
