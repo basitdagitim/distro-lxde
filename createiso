@@ -38,7 +38,7 @@ $rootfs/bin/busybox tar -xf $rootfs/tmp/bps/kur/rootfs.tar.xz -C $rootfs
 $rootfs/bin/busybox mkdir -p $rootfs/etc/bps
 echo "basitdagitim/base-bps-binary-packages">$rootfs/etc/bps/sources.list
 echo "basitdagitim/other-bps-binary-packages">>$rootfs/etc/bps/sources.list
-echo "basitdagitim/debian-bps-binary-packages">>$rootfs/etc/bps/sources.list
+#echo "basitdagitim/debian-bps-binary-packages">>$rootfs/etc/bps/sources.list
 echo "basitdagitim/x11-bps-binary-packages">>$rootfs/etc/bps/sources.list
 echo "basitdagitim/lxde-bps-binary-packages">>$rootfs/etc/bps/sources.list
 echo "anadolulinux/lfs-binary-packages">>$rootfs/etc/bps/sources.list
