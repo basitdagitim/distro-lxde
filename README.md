@@ -1,0 +1,3 @@
+# Basitdagitim
+lxde
+ 

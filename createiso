@@ -1,0 +1,135 @@
+#!/bin/bash
+set -x
+if which apt &>/dev/null && [[ -d /var/lib/dpkg && -d /etc/apt ]] ; then
+    apt-get update
+    echo "işlem başladı....."
+    apt install xorriso grub-pc-bin grub-efi mtools make python3 dosfstools e2fsprogs squashfs-tools python3-yaml gcc wget curl unzip xz-utils debootstrap git erofs-utils zstd -y
+fi
+
+apt-get install git devscripts equivs -y
+#------------------------------------------------------------------------------------
+rootfs="/root/distro/rootfs"
+distro="/root/distro"
+#rm -rf distro/iso
+rm -rf $rootfs
+mkdir -p /tmp/distro/rootfs
+mkdir -p $rootfs/bin
+#mkdir -p distro/rootfs
+#export PATH=/bbin:$PATH
+cp busybox $rootfs/bin/busybox
+cd $rootfs/bin/
+ln -s busybox cpio
+#busybox --install -s ./
+cd $rootfs/
+#cd distro/rootfs/
+mkdir  -p var run dev sys proc etc tmp/bps/kur
+bash -c "echo '127.0.0.1 basitdagitim' >> $rootfs/etc/hosts"
+bash -c "echo 'basitdagitim' > $rootfs/etc/hostname"
+bash -c "echo 'nameserver 8.8.8.8' > $rootfs/etc/resolv.conf"
+
+### system chroot  bind/mount
+for i in dev dev/pts proc sys; do mount -o bind /$i $rootfs/$i; done
+### manuel bps-tools install
+$rootfs/bin/busybox wget -O $rootfs/tmp/base-file-1.0.bps https://github.com/basitdagitim/base-bps-binary-packages/raw/master/base-file/base-file-1.0.bps 1>$rootfs/dev/null 2>$rootfs/dev/null
+$rootfs/bin/busybox tar -xf $rootfs/tmp/base-file-1.0.bps -C $rootfs/tmp/bps/kur
+$rootfs/bin/busybox tar -xf $rootfs/tmp/bps/kur/rootfs.tar.xz -C $rootfs
+
+#paket adresi ekleniyor
+$rootfs/bin/busybox mkdir -p $rootfs/etc/bps
+echo "basitdagitim/base-bps-binary-packages">$rootfs/etc/bps/sources.list
+echo "basitdagitim/other-bps-binary-packages">>$rootfs/etc/bps/sources.list
+echo "basitdagitim/debian-bps-binary-packages">>$rootfs/etc/bps/sources.list
+echo "basitdagitim/x11-bps-binary-packages">>$rootfs/etc/bps/sources.list
+echo "basitdagitim/lxde-bps-binary-packages">>$rootfs/etc/bps/sources.list
+echo "anadolulinux/lfs-binary-packages">>$rootfs/etc/bps/sources.list
+
+### installing bps package in rootfs
+$rootfs/bin/bps -u $rootfs
+#**********************************************************************
+echo root:x:0:0:root:/root:/bin/sh > $rootfs/etc/passwd 
+chmod 755 $rootfs/etc/passwd
+#**********************************************************************
+$rootfs/bin/bps -ri glibc $rootfs
+$rootfs/bin/bps -ri readline $rootfs
+$rootfs/bin/bps -ri ncurses $rootfs
+$rootfs/bin/bps -ri \bash $rootfs
+$rootfs/bin/bps -ri openssl $rootfs
+$rootfs/bin/bps -ri acl $rootfs
+$rootfs/bin/bps -ri attr $rootfs
+$rootfs/bin/bps -ri libcap $rootfs
+$rootfs/bin/bps -ri gmp $rootfs
+$rootfs/bin/bps -ri \grep $rootfs
+$rootfs/bin/bps -ri \sed $rootfs
+$rootfs/bin/bps -ri libpcre2 $rootfs
+$rootfs/bin/bps -ri coreutils $rootfs
+$rootfs/bin/bps -ri util-linux $rootfs
+$rootfs/bin/bps -ri openrc $rootfs
+$rootfs/bin/bps -ri kbd $rootfs
+
+for paket in libpcre2 busybox \
+		linux-image linux-headers linux-libc-dev libc6-dev libstdc++-dev live-boot live-config \
+		parted dosfstools kmod grub \
+		zstd  brotli expat libmd eudev findutils pam \
+		e2fsprogs \gzip \gawk initramfs-tools zlib audit  \
+		 xz-utils libxml2  
+		 #libselinux 
+#libsepol libsemanage mcstrans 
+#
+do
+#kmod eudev grup openrc pam
+#chroot $rootfs /bin/bps -ri $paket; 
+$rootfs/bin/bps -ri  $paket $rootfs
+done
+
+$rootfs/bin/bps -i  x11-base-base $rootfs
+$rootfs/bin/bps -i  x11-driver-base $rootfs
+$rootfs/bin/bps -i  x11-libs-base $rootfs
+$rootfs/bin/bps -i  font-base $rootfs
+$rootfs/bin/bps -i  lxde-base $rootfs
+
+### update-initrd
+fname=$(basename $rootfs/boot/config*)
+kversion=${fname:7}
+mv $rootfs/boot/config* $rootfs/boot/config-$kversion
+cp $rootfs/boot/config-$kversion $rootfs/etc/kernel-config
+
+chroot $rootfs update-initramfs -u -k $kversion
+
+#### system chroot umount
+for dir in dev dev/pts proc sys ; do    while umount -lf -R $rootfs/$dir 2>/dev/null ; do true; done done
+
+#************************iso *********************************
+mkdir -p $distro/iso
+mkdir -p $distro/iso/boot
+mkdir -p $distro/iso/boot/grub
+mkdir -p $distro/iso/live || true
+
+#### Copy kernel and initramfs (Debian/Devuan)
+
+cp -pf $rootfs/boot/initrd.img-* $distro/iso/boot/initrd.img
+cp -pf $rootfs/boot/vmlinuz-* $distro/iso/boot/vmlinuz
+rm -rf $rootfs/boot
+#### Create squashfs
+mksquashfs $rootfs $distro/filesystem.squashfs -comp xz -wildcards
+mv $distro/filesystem.squashfs $distro/iso/live/filesystem.squashfs
+
+#### Write grub.cfg
+
+
+echo 'menuentry "Disk GNU/Linux 64-bit" --class liveiso  {' > $distro/iso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live net.ifnames=0 biosdevname=0 init=/bin/initdisk ' >> $distro/iso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> $distro/iso/boot/grub/grub.cfg
+echo '}' >> $distro/iso/boot/grub/grub.cfg
+
+echo 'menuentry "Kur iki Part GNU/Linux 64-bit" --class liveiso  {' >> $distro/iso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live init=/bin/kur2 ' >> $distro/iso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> $distro/iso/boot/grub/grub.cfg
+echo '}' >> $distro/iso/boot/grub/grub.cfg
+
+echo 'menuentry "Kur Tek Part GNU/Linux 64-bit" --class liveiso  {' >> $distro/iso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live init=/bin/kur1 ' >> $distro/iso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> $distro/iso/boot/grub/grub.cfg
+echo '}' >> $distro/iso/boot/grub/grub.cfg
+
+grub-mkrescue $distro/iso/ -o $distro/distro.iso
+
