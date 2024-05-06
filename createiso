@@ -108,8 +108,21 @@ for paket in libfm libfm-extra menu-cache lxappearance lxde-common lxde-icon-the
 do
 $rootfs/bin/bps -i  $paket $rootfs
 done
+$rootfs/bin/bps -i  shadow $rootfs
+$rootfs/bin/bps -i  openbox $rootfs
 $rootfs/bin/bps -i  gtk3 $rootfs
 $rootfs/bin/bps -i  libjpeg-turbo $rootfs
+$rootfs/bin/bps -i  dbus $rootfs
+$rootfs/bin/bps -i  polkit $rootfs
+$rootfs/bin/bps -i  elogind $rootfs
+$rootfs/bin/bps -i  shared-mime-info $rootfs
+
+for paket in glib xapp lz4 gnutls lcms2 cups gdbm mpdecimal libgusb libisl libmpc
+do
+$rootfs/bin/bps -i  $paket $rootfs
+done
+
+
 ### update-initrd
 fname=$(basename $rootfs/boot/config*)
 kversion=${fname:7}
