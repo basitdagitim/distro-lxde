@@ -63,7 +63,7 @@ $rootfs/bin/bps -ri util-linux $rootfs
 $rootfs/bin/bps -ri openrc $rootfs
 #$rootfs/bin/bps -ri kbd $rootfs
 
-for paket in kbd libpcre2 busybox \
+for paket in rsync kbd libpcre2 busybox \
 		linux-image linux-headers linux-libc-dev libc6-dev libstdc++-dev live-boot live-config \
 		parted dosfstools kmod grub \
 		zstd  brotli expat libmd eudev findutils pam \
