@@ -46,9 +46,6 @@ echo "anadolulinux/lfs-binary-packages">>$rootfs/etc/bps/sources.list
 ### installing bps package in rootfs
 $rootfs/bin/bps -u $rootfs
 #**********************************************************************
-echo root:x:0:0:root:/root:/bin/sh > $rootfs/etc/passwd 
-chmod 755 $rootfs/etc/passwd
-#**********************************************************************
 $rootfs/bin/bps -ri glibc $rootfs
 $rootfs/bin/bps -ri readline $rootfs
 $rootfs/bin/bps -ri ncurses $rootfs
@@ -108,14 +105,11 @@ for paket in libfm libfm-extra menu-cache lxappearance lxde-common lxde-icon-the
 do
 chroot $rootfs /bin/bps -i $paket; 
 done
-$rootfs/bin/bps -i  shadow $rootfs
-$rootfs/bin/bps -i  openbox $rootfs
-$rootfs/bin/bps -i  gtk3 $rootfs
-$rootfs/bin/bps -i  libjpeg-turbo $rootfs
-$rootfs/bin/bps -i  dbus $rootfs
-$rootfs/bin/bps -i  polkit $rootfs
-$rootfs/bin/bps -i  elogind $rootfs
-$rootfs/bin/bps -i  shared-mime-info $rootfs
+
+for paket in shadow openbox gtk3 libjpeg-turbo dbus polkit elogind shared-mime-info
+do
+chroot $rootfs /bin/bps -i $paket; 
+done
 
 for paket in glib xapp lz4 gnutls lcms2 cups gdbm mpdecimal libgusb libisl libmpc
 do
