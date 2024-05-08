@@ -144,9 +144,13 @@ mksquashfs $rootfs $distro/filesystem.squashfs -comp xz -wildcards
 mv $distro/filesystem.squashfs $distro/iso/live/filesystem.squashfs
 
 #### Write grub.cfg
+echo 'menuentry "Canli GNU/Linux 64-bit" --class liveiso {' > $distro/iso/boot/grub/grub.cfg
+echo ' linux /boot/vmlinuz boot=live net.ifnames=0 biosdevname=0 locales=tr_TR.UTF-8,en_US.UTF-8 keyboard-layouts=tr username=etahta hostname=tahta user-fullname=etahta noswap quiet live-config --' >> $distro/iso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> $distro/iso/boot/grub/grub.cfg
+echo '}' >> $distro/iso/boot/grub/grub.cfg
 
 
-echo 'menuentry "Disk GNU/Linux 64-bit" --class liveiso  {' > $distro/iso/boot/grub/grub.cfg
+echo 'menuentry "Disk GNU/Linux 64-bit" --class liveiso  {' >> $distro/iso/boot/grub/grub.cfg
 echo '    linux /boot/vmlinuz boot=live net.ifnames=0 biosdevname=0 init=/bin/initdisk ' >> $distro/iso/boot/grub/grub.cfg
 echo '    initrd /boot/initrd.img' >> $distro/iso/boot/grub/grub.cfg
 echo '}' >> $distro/iso/boot/grub/grub.cfg
